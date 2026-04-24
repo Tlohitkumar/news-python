@@ -3,13 +3,37 @@ from textblob import TextBlob
 
 app = Flask(__name__)
 
+@app.route('/sentiment', methods=['POST'])
+def sentiment():
+    data = request.get_json()
+    text = data.get("text", "")
+
+    score = TextBlob(text).sentiment.polarity
+
+    if score > 0:
+        result = "Positive 😊"
+    elif score < 0:
+        result = "Negative 😡"
+    else:
+        result = "Neutral 😐"
+
+    summary = text[:120] + "..." if len(text) > 120 else text
+    trust = 80
+
+    return jsonify({
+        "sentiment": result,
+        "trust": trust,
+        "summary": summary
+    })
+
+
 @app.route('/bias', methods=['POST'])
 def bias():
     data = request.get_json()
     text = data.get("text", "").lower()
 
-    left_words = ["welfare", "rights", "equality", "climate", "workers"]
-    right_words = ["tax", "security", "military", "border", "business"]
+    left_words = ["welfare", "rights", "equality"]
+    right_words = ["tax", "security", "business"]
 
     left_score = sum(word in text for word in left_words)
     right_score = sum(word in text for word in right_words)
@@ -22,6 +46,7 @@ def bias():
         result = "Neutral ⚪"
 
     return jsonify({"bias": result})
+
 
 if __name__ == "__main__":
     app.run(port=5000)
